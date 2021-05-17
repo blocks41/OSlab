@@ -6,7 +6,6 @@
 #include <vector>
 
 using namespace std;
-using Creation_tree=list
 
 enum status_of_Process{ ready, running, blocked };   //进程的状态
 enum Prior_of_Process{init, user, system};     //进程优先级
@@ -29,7 +28,6 @@ class PCB {
 private:
 	string PID;   //进程名称
 	status_of_Process status;    //进程的状态
-	list
 	Prior_of_Process Priority;   //进程优先级
 		
 public:
