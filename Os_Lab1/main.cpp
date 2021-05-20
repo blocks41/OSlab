@@ -62,6 +62,7 @@ class Test_Shell {
 private:
 	//三个优先级的就绪队列,这里不采用vector,因为进程要频繁的插入删除
 	PCB_Pointer Running=nullptr;  //假设只能有一个运行
+	list<PCB_Pointer> init_Ready_List;
 	list<PCB_Pointer> user_Ready_List;
 	list<PCB_Pointer> system_Ready_List;
 	list<PCB_Pointer> Block_List;  //阻塞队列
@@ -165,22 +166,22 @@ public:
 	}
 	//时钟中断
 	void Time_out() {
-		Running->status = ready;
+		if (Running->Priority == init_) return;
 		if (Running->Priority == user_) {
+			Running->status = ready;
 			user_Ready_List.push_back(Running);
-			Running = user_Ready_List.front();
-			user_Ready_List.pop_front();
+			Running = nullptr;
 		}
-		if (Running->Priority == system_) {
+		else if (Running->Priority == system_) {
+			Running->status = ready;
 			system_Ready_List.push_back(Running);
-			Running = system_Ready_List.front();
-			system_Ready_List.pop_front();
+			Running = nullptr;
 		}
-		Running->status = running;
+		Scheduler();
 	}
 	//调度
 	void Scheduler() {
-		//如果阻塞队列不为空
+		//如果阻塞队列不为空,这里不需要多个阻塞队列，因为会判断是否有优先级更高的就绪进程
 		for (auto begin = Block_List.begin(); begin != Block_List.end();) {
 			int flag = 1;   //用来标志是否满足资源分配
 			//先检查
@@ -218,21 +219,34 @@ public:
 			if (!system_Ready_List.empty()) {
 				Running = system_Ready_List.front();
 				system_Ready_List.pop_front();
+				Running->status = running;
 			}
 			else if (!user_Ready_List.empty()) {
 				Running = user_Ready_List.front();
 				user_Ready_List.pop_front();
+				Running->status = running;
+			}
+			else {
+				Running = init_Ready_List.front();
+				init_Ready_List.pop_front();
+				Running->status = running;
 			}
 		}
 		//当就绪队列头的进程优先级更高，就将正在运行的加入就绪队列尾
 		else if (!system_Ready_List.empty() && system_Ready_List.front()->Priority > Running->Priority) {
-			user_Ready_List.push_back(Running);
+			Running->status = ready;
+			if (Running->Priority == user_) user_Ready_List.push_back(Running);
+			else init_Ready_List.push_back(Running);
 			Running = system_Ready_List.front();
 			system_Ready_List.pop_front();
+			Running->status = running;
 		}
 		else if (!user_Ready_List.empty() && user_Ready_List.front()->Priority > Running->Priority) {
+			Running->status = ready;
+			init_Ready_List.push_back(Running);
 			Running = user_Ready_List.front();
 			user_Ready_List.pop_front();
+			Running->status = running;
 		}
 	}
 	//杀死进程，及删除队列中的PCB
@@ -319,9 +333,9 @@ int main() {
 			cin >> P_Name;
 			PM.Destroy(P_Name);
 		}
-		else if (Order == "end") {
-			break;
-		}
+		else if (Order == "end") break;
+		else cout << "Error Order!";
+
 		PM.Print_Running_P();
 	}
 
