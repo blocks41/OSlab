@@ -1,7 +1,7 @@
 #include <iostream>
-#include <string>
 #include <list>
 #include <vector>
+#include <string>
 
 #define ERROR -1
 #define init_ 0
@@ -10,11 +10,11 @@
 
 using namespace std;
 using Prior_Type = int;
+using PCB_Pointer = struct PCB_Type*;
 
 enum status_Type{ ready, running, blocked };   //进程的状态
 
 struct PCB_Type;
-using PCB_Pointer = struct PCB_Type*;
 class RCB_Type;
 struct Resource_Type;
 struct Creation_Tree_Type;
@@ -143,8 +143,8 @@ public:
 				cout << "申请资源数大于资源总数！";
 				exit(ERROR);
 			}
-			Running->status = blocked;
-			Block_List.push_back(Running);  //申请资源数大于剩余资源数，就加入阻塞队列
+			Running->status = blocked;//申请资源数大于剩余资源数，就加入阻塞队列
+			Block_List.push_back(Running); 
 			//从运行队列中删除
 			Running = nullptr;
 			Scheduler();
