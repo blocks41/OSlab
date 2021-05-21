@@ -286,8 +286,16 @@ public:
 			}
 		}
 		//归还进程占有的资源
-		for (auto begin_ = PCB->Resource.begin(); begin_ != PCB->Resource.end(); begin_++) {
-			RCB.plus_R((*begin_).RID, (*begin_).Count);
+		//如果进程是在阻塞队列中的，那么造成阻塞的资源并不返还
+		if (PCB->status == blocked) {
+			for (int i = 0; i < PCB->Resource.size()-1; i++) {
+				RCB.plus_R(PCB->Resource[i].RID, PCB->Resource[i].Count);
+			}
+		}
+		else {
+			for (auto begin_ = PCB->Resource.begin(); begin_ != PCB->Resource.end(); begin_++) {
+				RCB.plus_R((*begin_).RID, (*begin_).Count);
+			}
 		}
 		Scheduler();  //即使将阻塞的进程投入使用
 	}
