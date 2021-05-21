@@ -51,7 +51,7 @@ struct Resource_Type {
 	int RID;   //资源名称
 	int Count;   //占用资源数
 };
-
+//进程树结构
 struct Creation_Tree_Type {
 	PCB_Pointer Parent;   //父进程
 	list<PCB_Pointer> Children;   //子进程
@@ -139,12 +139,13 @@ public:
 			RCB.subs_R(rid, Num_of_Request);      //减去分配的资源
 		}
 		else
-		{
-			if (Num_of_Request > rid) {  //当申请的资源数大于资源的总数，就打印错误并退出
+		{   //当申请的资源数大于资源的总数，就打印错误并退出
+			if (Num_of_Request > rid) {  
 				cout << "申请资源数大于资源总数！";
 				exit(ERROR);
 			}
-			Running->status = blocked;//申请资源数大于剩余资源数，就加入阻塞队列
+			//申请资源数大于剩余资源数，就加入阻塞队列
+			Running->status = blocked;
 			Block_List.push_back(Running); 
 			//从运行队列中删除
 			Running = nullptr;
@@ -153,7 +154,7 @@ public:
 	}
 	//释放资源
 	void Release(int rid, int Num_of_Release) {
-		//将资源r从当前进程占用的资源列表里移除，并且资源r的可用数量从u变为u+n
+		//将资源从当前进程占用的资源列表里移除，并且返还资源
 		for (auto begin = Running->Resource.begin(); begin != Running->Resource.end(); begin++) {
 			if ((*begin).RID == rid) {
 				RCB.plus_R(rid, Num_of_Release);
@@ -166,6 +167,7 @@ public:
 	}
 	//时钟中断
 	void Time_out() {
+		//如果当前运行的程序是初始化程序，就没有必要执行下去
 		if (Running->Priority == init_) return;
 		if (Running->Priority == user_) {
 			Running->status = ready;
@@ -184,7 +186,7 @@ public:
 		//如果阻塞队列不为空,这里不需要多个阻塞队列，因为会判断是否有优先级更高的就绪进程
 		for (auto begin = Block_List.begin(); begin != Block_List.end();) {
 			int flag = 1;   //用来标志是否满足资源分配
-			//先检查
+			//先检查，是否满足资源分配
 			for (int i = 0; i < (*begin)->Resource.size(); i++) {
 				int rid = (*begin)->Resource[i].RID;//需求资源id
 				int Num_of_request = (*begin)->Resource[i].Count;  //需求资源数
@@ -214,7 +216,7 @@ public:
 				begin++;
 			}
 		}
-		//当没有运行进程时
+		//当没有运行进程时，按优先级从高到低检查就绪队列，并唤醒
 		if (!Running) {
 			if (!system_Ready_List.empty()) {
 				Running = system_Ready_List.front();
